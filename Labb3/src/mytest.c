@@ -4,16 +4,20 @@
 #include <avr/io.h>
 #include <util/delay.h>
 #include <stdio.h>
+#include <avr/interrupt.h>
 const uint16_t digits[10] = {0x1551, 0x8110, 0x11e1, 0x1191, 0x05b0, 0x14b1, 0x14f1, 0x9004, 0x15f1, 0x15b1}; 
 static long KEYPRESSED = 0;
 
-int get_ticks(void);
-void lcdIni(); 
+void Init(); 
 void writeChar(char ch, int pos); // from lab 1
 bool is_prime(long i); // from lab 1
 
+mutex blink_mutex = {1,0};  
+mutex button_mutex = {1, 0};
 
-void lcdIni(){
+
+
+void Init(){
 	LCDCRB = (1 << LCDCS) | (1 << LCDMUX0) | (1 << LCDMUX1) | (1 << LCDPM0) | (1 << LCDPM1) | (1 << LCDPM2); 
 	//			Clock cycle		sätter duty till 1/4						S�tter p� alla segments i lcdn
 	LCDCRA = (1 << LCDEN);
@@ -25,6 +29,28 @@ void lcdIni(){
 	CLKPR = 0x80;
 	CLKPR = 0x00;
 
+	TCNT1 = 0; // Reset timer count
+    OCR1A = 3906; // (8 000 000 / 1024) * 0,5 = 3906.25 --> 500ms interrupt interval
+    TIMSK1 = (1 << OCIE1A); 
+    TCCR1B = (1 << WGM12) | (1 << CS10) | (0 << CS11) | (1 << CS12);
+    TCCR1A = (1 << COM1A1) | (1 << COM1A0);
+
+
+	PORTB = (1 << PB7);
+    PCMSK1 = (1 << PCINT15); 
+    EIMSK = (1 << PCIE1);
+}
+
+
+ISR(TIMER1_COMPA_vect) {
+    unlock(&blink_mutex); 
+}
+
+ISR(PCINT1_vect) {
+    int pressed = !(PINB & (1 << PB7));
+	if (pressed == 1) {
+		unlock(&button_mutex);
+	}
 }
 
 bool is_prime(long n) {
@@ -95,42 +121,33 @@ void computePrimes(int pos) {
 void button(){
 
     
-    PORTB = (1 << PB7); 
+    PORTB = (1 << PB7);
 
 	LCDDR13 = 0x0;
 	LCDDR18 = 0x1;
 
 	while(1) {
-		while(PINB & (1 << PB7)) {
-			;
-		}
+		lock(&button_mutex);
 
 		LCDDR18 ^= 0x1;
 		LCDDR13 ^= 0x1;
 		
 		KEYPRESSED ++;
 		printAt(KEYPRESSED, 4);
-
-		while(!(PINB & (1 << PB7)))
-		;
+		
 	}
 }
 
 void blink() {
-	int wait_until = get_ticks() + 10; 
 
 	while(1) {
-		// Busy-wait: check if current time has reached our target
-		if (get_ticks() >= wait_until) {
-				LCDDR3 ^= 0x1; 
-				wait_until = get_ticks() + 10; // Schedule next toggle in 10 ticks
-			}
-			
-		}
+		lock(&blink_mutex);
+		LCDDR3 ^= 0x1; 
+	}
 }
 
 int main() {
-    //lcdIni();
+    Init();
     spawn(button, 0);
 	spawn(blink, 0);
     computePrimes(0);

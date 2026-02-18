@@ -27,6 +27,9 @@ thread freeQ   = threads;
 thread readyQ  = NULL;
 thread current = &initp;
 
+extern mutex blink_mutex;
+extern mutex button_mutex;
+
 volatile int system_ticks = 0;
 int get_ticks(void) {
     return system_ticks;
@@ -41,20 +44,23 @@ static void initialize(void) {
     threads[NTHREADS-1].next = NULL;
 
     // Functionality for joystick button interrupt
-    PORTB = (1 << PB7);
+    /*PORTB = (1 << PB7);
     PCMSK1 = (1 << PCINT15); 
     EIMSK = (1 << PCIE1);
-
+    */
     // Functionality for timer interrupt
+    /*
     TCNT1 = 0; // Reset timer count
-    OCR1A = 390; // (8 000 000 / 1024) * 0,05 = 390.625 --> 50ms interrupt interval
+    OCR1A = 3906; // (8 000 000 / 1024) * 0,5 = 3906.25 --> 500ms interrupt interval
     TIMSK1 = (1 << OCIE1A); 
     TCCR1B = (1 << WGM12) | (1 << CS10) | (0 << CS11) | (1 << CS12);
     TCCR1A = (1 << COM1A1) | (1 << COM1A0);
+    */
 
     initialized = 1;
 }
 
+/*
 ISR(PCINT1_vect) {
 
    int pressed = !(PINB & (1 << PB7));
@@ -70,22 +76,15 @@ ISR(PCINT1_vect) {
 		BUTTON_PRESSED = 0;
 	}
 }
+*/
 
-ISR(TIMER1_COMPA_vect) {
-    system_ticks++;
-    yield();
-}
+/*ISR(TIMER1_COMPA_vect) {
+    unlock(&blink_mutex); // Signal the blink thread to toggle the LED
+}*/
 
 static void enqueue(thread p, thread *queue) {
-    p->next = NULL;
-    if (*queue == NULL) {
-        *queue = p;
-    } else {
-        thread q = *queue;
-        while (q->next)
-            q = q->next;
-        q->next = p;
-    }
+    p->next = *queue;
+    *queue = p;
 }
 
 static thread dequeue(thread *queue) {
@@ -125,7 +124,9 @@ void spawn(void (* function)(int), int arg) {
     }
     SETSTACK(&newp->context, &newp->stack);
 
-    enqueue(newp, &readyQ);
+    enqueue(current, &readyQ);
+    dispatch(newp);
+    
     ENABLE();
 }
 
@@ -151,7 +152,9 @@ void unlock(mutex *m) {
     DISABLE();
     if (m->waitQ != NULL) { // Check if there are waiting threads
         thread next = dequeue(&m->waitQ); // Take the next thread from mutexQ
-        enqueue(next, &readyQ);
+        enqueue(current, &readyQ);
+        dispatch(next); // Dispatch the waiting thread
+
     } else {
         m->locked = 0; // Unlock if no threads are waiting
     }
