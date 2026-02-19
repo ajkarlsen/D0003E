@@ -92,8 +92,7 @@ static thread dequeue(thread *queue) {
     if (*queue) {
         *queue = (*queue)->next;
     } else {
-        // Empty queue, kernel panic!!!
-        while (1) ;  // not much else to do...
+        while (1) ;  
     }
     return p;
 }

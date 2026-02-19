@@ -28,8 +28,12 @@ thread readyQ  = NULL;
 thread current = &initp;
 
 volatile int system_ticks = 0;
+
 int get_ticks(void) {
-    return system_ticks;
+    DISABLE();
+    int ticks = system_ticks;
+    ENABLE();
+    return ticks;
 }
 
 int initialized = 0;
@@ -93,8 +97,8 @@ static thread dequeue(thread *queue) {
     if (*queue) {
         *queue = (*queue)->next;
     } else {
-        // Empty queue, kernel panic!!!
-        while (1) ;  // not much else to do...
+        
+        while (1) ;  
     }
     return p;
 }
