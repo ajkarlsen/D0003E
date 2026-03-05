@@ -8,5 +8,5 @@ typedef struct {
 
 #define displayInit() { initObject() }
 int printAt(Display *self, int arg);
-void writeChar(char ch, int pos);
+int setIndicator(Display *self, int active_gen);
 #endif

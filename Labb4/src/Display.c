@@ -32,3 +32,14 @@ int printAt(Display *self, int arg) {
     writeChar((num % 10) + '0', pos + 1);
     return 0;
 }
+
+int setIndicator(Display *self, int active_gen) {
+    if (active_gen == 0){ 
+        LCDDR13 = 1; // Highlight gen0
+        LCDDR18 = 0; // Unhighlight gen1
+    } else if (active_gen == 1) {
+        LCDDR13 = 0; // Highlight gen1
+        LCDDR18 = 1; // Unhighlight gen0
+    }
+    return 0;
+}

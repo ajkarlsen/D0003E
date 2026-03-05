@@ -33,6 +33,8 @@ void init() {
 	// External interrupt enable
 	EIMSK = ((1 << 7) | (1 << 6));
     
+    LCDDR13 = 0x1;
+    LCDDR18 = 0x0;
     //set clock
     CLKPR = 0x80;
 	CLKPR = 0x00;

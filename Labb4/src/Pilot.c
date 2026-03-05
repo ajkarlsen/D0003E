@@ -20,9 +20,11 @@ int joystick(Pilot *self, int direction) {
 	switch (direction) {
 		case 0: // left
 			self->selected = 0;
+            ASYNC(self->display, setIndicator, 0);
 			break;
 		case 1: // right
 			self->selected = 1;
+            ASYNC(self->display, setIndicator, 1);
 			break;
 		case 2: // up
 			ASYNC(active, incFrequency, 0);
@@ -34,6 +36,7 @@ int joystick(Pilot *self, int direction) {
 			if (active->frequency == 0)	{
 				ASYNC(active, setFrequency, active->savedFrequency);
 			} else {
+                active->savedFrequency = active->frequency;
 				ASYNC(active, setFrequency, 0);
 			}
 			break;
@@ -67,6 +70,22 @@ int joystickHandler(Pilot *self, int unused) {
         ASYNC(self, joystick, 0);
     } else if (!(PINE & (1 << 3))) { // Right
         ASYNC(self, joystick, 1);
+    }
+    return 0;
+}
+
+int holdUp(Pilot *self, int unused) {
+    if (!(PINB & (1 << 6))) { 
+        ASYNC(self, joystick, 2); // Send the UP command
+        AFTER(MSEC(1000), self, holdUp, 0); // Schedule another check in 200ms
+    }
+    return 0;
+}
+
+int holdDown(Pilot *self, int unused) {
+    if (!(PINB & (1 << 7))) { 
+        ASYNC(self, joystick, 3); 
+        AFTER(MSEC(1000), self, holdDown, 0); 
     }
     return 0;
 }
