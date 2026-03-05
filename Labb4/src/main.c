@@ -13,7 +13,7 @@ HarbourMaster harbourmaster = initHarbourMaster();
 Display display = displayInit();
 PlsGen gen0 = {initObject(), 0, 0, 4, &harbourmaster, 0}; // Pin 4
 PlsGen gen1 = {initObject(), 0, 0, 6, &harbourmaster, 0}; // Pin 6
-Pilot pilot = {initObject(), &gen0, &gen1, 0, &display};
+Pilot pilot = {initObject(), &gen0, &gen1, 0, &display, 0};
 
 void init() {
     LCDCRA = (1 << LCDEN);

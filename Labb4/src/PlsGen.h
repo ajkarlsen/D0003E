@@ -18,5 +18,7 @@ int setFrequency(PlsGen *self, int frequency);
 int start(PlsGen *self, int unused);
 int stop(PlsGen *self, int unused);
 int toggle(PlsGen *self, int unused);
+int incFrequency(PlsGen *self, int unused);
+int decFrequency(PlsGen *self, int unused);
 
 #endif

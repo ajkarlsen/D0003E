@@ -25,18 +25,10 @@ int joystick(Pilot *self, int direction) {
 			self->selected = 1;
 			break;
 		case 2: // up
-			ASYNC(active, setFrequency, active->frequency+1);
-			if (!(PINB & (1 << 6))) {
-				AFTER(MSEC(300), self, joystick, 2);
-			}
+			ASYNC(active, incFrequency, 0);
 			break;
 		case 3: // down
-			if (active->frequency > 0 ) {
-				ASYNC(active, setFrequency, active->frequency-1);
-			}
-			if (!(PINB & (1 << 7))) {
-				AFTER(MSEC(300), self, joystick, 3);
-			}
+			ASYNC(active, decFrequency, 0);
 			break;
 		case 4: // press
 			if (active->frequency == 0)	{
@@ -44,6 +36,7 @@ int joystick(Pilot *self, int direction) {
 			} else {
 				ASYNC(active, setFrequency, 0);
 			}
+			break;
 	}
 	ASYNC(self, updateDisplay, 0);
 	return 0;
@@ -51,7 +44,19 @@ int joystick(Pilot *self, int direction) {
 	
 }
 
+int clearBounce(Pilot *self, int unused) {
+    self->bouncing = 0; // Reset bouncing to allow new input
+    return 0;
+}
+
 int joystickHandler(Pilot *self, int unused) {
+    if (self->bouncing) {
+        return 0; // Ignore input if we're currently bouncing
+    }
+
+    self->bouncing = 1; // Set bouncing to true to ignore further input
+    AFTER(MSEC(150), self, clearBounce, 0); // Schedule bounce reset after 50ms
+
     if (!(PINB & (1 << 6))) { // Up
         ASYNC(self, joystick, 2);
     } else if (!(PINB & (1 << 7))) { // Down
@@ -62,22 +67,6 @@ int joystickHandler(Pilot *self, int unused) {
         ASYNC(self, joystick, 0);
     } else if (!(PINE & (1 << 3))) { // Right
         ASYNC(self, joystick, 1);
-    }
-    return 0;
-}
-
-int holdUp(Pilot *self, int unused) {
-    if (!(PINB & (1 << 6))) { 
-        ASYNC(self, joystick, 2); // Send the UP command
-        AFTER(MSEC(1000), self, holdUp, 0); // Schedule another check in 200ms
-    }
-    return 0;
-}
-
-int holdDown(Pilot *self, int unused) {
-    if (!(PINB & (1 << 7))) { 
-        ASYNC(self, joystick, 3); 
-        AFTER(MSEC(1000), self, holdDown, 0); 
     }
     return 0;
 }
