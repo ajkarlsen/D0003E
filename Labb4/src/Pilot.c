@@ -7,13 +7,7 @@
 #include <stdio.h>
 #include "Display.h"
 
-int updateDisplay (Pilot *self, int unused) {
-	int freq0 = self->gen0->frequency;
-	int freq1 = self->gen1->frequency;
-	ASYNC(self->display, printAt, (0 << 8) | freq0);
-	ASYNC(self->display, printAt, (4 << 8) | freq1);
-	return 0;
-}
+
 
 int joystick(Pilot *self, int direction) {
 	PlsGen *active = self->selected == 0 ? self->gen0 : self->gen1;
@@ -41,14 +35,12 @@ int joystick(Pilot *self, int direction) {
 			}
 			break;
 	}
-	ASYNC(self, updateDisplay, 0);
 	return 0;
 
-	
 }
 
 int clearBounce(Pilot *self, int unused) {
-    self->bouncing = 0; // Reset bouncing to allow new input
+    self->bouncing = 0; 
     return 0;
 }
 
@@ -74,18 +66,11 @@ int joystickHandler(Pilot *self, int unused) {
     return 0;
 }
 
-int holdUp(Pilot *self, int unused) {
-    if (!(PINB & (1 << 6))) { 
-        ASYNC(self, joystick, 2); // Send the UP command
-        AFTER(MSEC(1000), self, holdUp, 0); // Schedule another check in 200ms
-    }
-    return 0;
-}
-
-int holdDown(Pilot *self, int unused) {
-    if (!(PINB & (1 << 7))) { 
-        ASYNC(self, joystick, 3); 
-        AFTER(MSEC(1000), self, holdDown, 0); 
-    }
+int liftOff(Pilot *self, int unused) {
+	ASYNC(self->gen0, setFrequency, 0);
+    ASYNC(self->gen1, setFrequency, 0);
+    
+    ASYNC(self->display, setIndicator, 0);
+    
     return 0;
 }

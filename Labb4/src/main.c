@@ -11,8 +11,8 @@
 
 HarbourMaster harbourmaster = initHarbourMaster();
 Display display = displayInit();
-PlsGen gen0 = {initObject(), 0, 0, 4, &harbourmaster, 0}; // Pin 4
-PlsGen gen1 = {initObject(), 0, 0, 6, &harbourmaster, 0}; // Pin 6
+PlsGen gen0 = {initObject(), 0, 0, 4, &harbourmaster, 0, &display, 0}; // Pin 4
+PlsGen gen1 = {initObject(), 0, 0, 6, &harbourmaster, 0, &display, 4}; // Pin 6
 Pilot pilot = {initObject(), &gen0, &gen1, 0, &display, 0};
 
 void init() {
@@ -33,8 +33,6 @@ void init() {
 	// External interrupt enable
 	EIMSK = ((1 << 7) | (1 << 6));
     
-    LCDDR13 = 0x1;
-    LCDDR18 = 0x0;
     //set clock
     CLKPR = 0x80;
 	CLKPR = 0x00;
@@ -54,5 +52,5 @@ int main(void) {
 
     // Initial display update
     //ASYNC(&pilot, updateDisplay, 0);
-    return TINYTIMBER(&pilot, updateDisplay, 0);
+    return TINYTIMBER(&pilot, liftOff, 0);
 }

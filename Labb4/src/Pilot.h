@@ -17,8 +17,8 @@ typedef struct {
 
 // direction: 0=left, 1=right, 2=up, 3=down, 4=press
 int joystick(Pilot *self, int direction);
-int updateDisplay(Pilot *self, int unused);
 int joystickHandler(Pilot *self, int unused);
 int clearBounce(Pilot *self, int unused);
+int liftOff(Pilot *self, int unused);
 
 #endif

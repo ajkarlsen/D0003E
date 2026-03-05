@@ -8,6 +8,7 @@ int setFrequency(PlsGen *self, int freq) {
     int oldFreq = self->frequency;
     self -> frequency = freq;
 
+    ASYNC(self->display, printAt, (self->displayPos << 8) | self->frequency);
     if (freq == 0) {
         ASYNC(self->harbourMaster, pinOff, self->selectedPin);
     } else {
@@ -62,16 +63,12 @@ int toggle(PlsGen *self, int unused) {
 }
 
 int incFrequency(PlsGen *self, int is_repeat) {
-    // 1. If this is a repeat loop, check the button FIRST.
-    // If the UP button (PINB6) is NOT pressed, stop the loop immediately!
     if (is_repeat == 1 && (PINB & (1 << 6))) {
         return 0; 
     }
 
-    // 2. We are safe to increment
     if (self->frequency < 99) {
         ASYNC(self, setFrequency, self->frequency + 1);
-        ASYNC(&pilot, updateDisplay, 0); // See Fix 2 below
     }
 
     if (is_repeat == 0) {
@@ -89,7 +86,6 @@ int decFrequency(PlsGen *self, int is_repeat) {
 
     if (self->frequency > 0) {
         ASYNC(self, setFrequency, self->frequency - 1);
-        ASYNC(&pilot, updateDisplay, 0);
     }
 
     if (is_repeat == 0) {

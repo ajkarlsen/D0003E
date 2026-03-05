@@ -23,8 +23,6 @@ void writeChar(char ch, int pos) {
 
 int printAt(Display *self, int arg) {
 
-    //write 12 to position 0
-    // arg: 0x00 0x0C = 00000000 00001100
 
     int pos = arg >> 8;
     int num = arg & 0xFF;
