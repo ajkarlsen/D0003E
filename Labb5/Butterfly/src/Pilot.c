@@ -26,8 +26,13 @@ int joystick(Pilot *self, int direction) {
 		case 3: // down
 			ASYNC(active, decFrequency, 0);
 			break;
-		case 4: // pres
-            ASYNC(active, toggleSavedFrequency, 0);
+		case 4: // press
+			if (active->frequency == 0)	{
+				ASYNC(active, setFrequency, active->savedFrequency);
+			} else {
+                active->savedFrequency = active->frequency;
+				ASYNC(active, setFrequency, 0);
+			}
 			break;
 	}
 	return 0;
@@ -45,7 +50,7 @@ int joystickHandler(Pilot *self, int unused) {
     }
 
     self->bouncing = 1; 
-    AFTER(MSEC(150), self, clearBounce, 0);  
+    AFTER(MSEC(150), self, clearBounce, 0); 
 
     if (!(PINB & (1 << 6))) { // Up
         ASYNC(self, joystick, 2);
@@ -65,8 +70,7 @@ int liftOff(Pilot *self, int unused) {
 	ASYNC(self->gen0, setFrequency, 0);
     ASYNC(self->gen1, setFrequency, 0);
     
-    SYNC(self->display, setIndicator, 0);
+    ASYNC(self->display, setIndicator, 0);
     
     return 0;
 }
-

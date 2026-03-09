@@ -22,6 +22,5 @@ int stop(PlsGen *self, int unused);
 int toggle(PlsGen *self, int unused);
 int incFrequency(PlsGen *self, int isRepeat);
 int decFrequency(PlsGen *self, int isRepeat);
-int toggleSavedFrequency(PlsGen *self, int unused);
 
 #endif

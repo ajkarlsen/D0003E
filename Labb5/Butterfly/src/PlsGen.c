@@ -7,7 +7,7 @@ int setFrequency(PlsGen *self, int freq) {
     int oldFreq = self->frequency;
     self -> frequency = freq;
 
-    SYNC(self->display, printAt, (self->displayPos << 8) | self->frequency);
+    ASYNC(self->display, printAt, (self->displayPos << 8) | self->frequency);
     if (freq == 0) {
         ASYNC(self->harbourMaster, pinOff, self->selectedPin);
     } else {
@@ -26,7 +26,7 @@ int start(PlsGen *self, int unused) {
         ASYNC(self->harbourMaster, pinOn, self->selectedPin);
         
         int half_time = 500 / self->frequency;
-        AFTER(MSEC(half_time), self, toggle, 0);
+        AFTER(MSEC(half_time), self, toggle, 0);        
     }
     return 0;
 }
@@ -86,16 +86,6 @@ int decFrequency(PlsGen *self, int is_repeat) {
         AFTER(MSEC(500), self, decFrequency, 1);
     } else {
         AFTER(MSEC(150), self, decFrequency, 1);
-    }
-    return 0;
-}
-
-int toggleSavedFrequency(PlsGen *self, int unused) {
-    if (self->frequency == 0) {
-        ASYNC(self, setFrequency, self->savedFrequency);
-    } else {
-        self->savedFrequency = self->frequency;
-        ASYNC(self, setFrequency, 0);
     }
     return 0;
 }
