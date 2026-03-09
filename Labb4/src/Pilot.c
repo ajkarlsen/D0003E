@@ -46,11 +46,11 @@ int clearBounce(Pilot *self, int unused) {
 
 int joystickHandler(Pilot *self, int unused) {
     if (self->bouncing) {
-        return 0; // Ignore input if we're currently bouncing
+        return 0; 
     }
 
-    self->bouncing = 1; // Set bouncing to true to ignore further input
-    AFTER(MSEC(150), self, clearBounce, 0); // Schedule bounce reset after 50ms
+    self->bouncing = 1; 
+    AFTER(MSEC(150), self, clearBounce, 0); 
 
     if (!(PINB & (1 << 6))) { // Up
         ASYNC(self, joystick, 2);

@@ -23,7 +23,6 @@ void writeChar(char ch, int pos) {
 
 int printAt(Display *self, int arg) {
 
-
     int pos = arg >> 8;
     int num = arg & 0xFF;
     writeChar(((num / 10) % 10) + '0', pos);

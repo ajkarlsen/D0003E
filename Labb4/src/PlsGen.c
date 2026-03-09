@@ -2,7 +2,6 @@
 #include "avr/io.h"
 #include "TinyTimber.h"
 #include "Pilot.h"
-extern Pilot pilot;
 
 int setFrequency(PlsGen *self, int freq) {
     int oldFreq = self->frequency;
@@ -26,13 +25,8 @@ int start(PlsGen *self, int unused) {
         self -> outputState = 1;
         ASYNC(self->harbourMaster, pinOn, self->selectedPin);
         
-        if (self->frequency == 0) {
-            ASYNC(self->harbourMaster, pinOff, self->selectedPin); 
-        }else {
-            int half_time = 500 / self->frequency;
-            AFTER(MSEC(half_time), self, toggle, 0);
-        }
-        
+        int half_time = 500 / self->frequency;
+        AFTER(MSEC(half_time), self, toggle, 0);        
     }
     return 0;
 }
@@ -45,7 +39,7 @@ int stop(PlsGen *self, int unused) {
 
 int toggle(PlsGen *self, int unused) {
     if (self->frequency == 0) {
-        return 0; // Do nothing if frequency is zero
+        return 0; 
     }
     
     if (self->outputState) {

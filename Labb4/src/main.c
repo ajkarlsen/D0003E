@@ -51,6 +51,5 @@ int main(void) {
 
 
     // Initial display update
-    //ASYNC(&pilot, updateDisplay, 0);
     return TINYTIMBER(&pilot, liftOff, 0);
 }
