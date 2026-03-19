@@ -1,8 +1,10 @@
 #include "Display.h"
+#include "BridgeController.h" // We need this to access the bridge variables
 #include <avr/io.h>
 
 const uint16_t digits[10] = {0x1551, 0x8110, 0x11e1, 0x1191, 0x05b0, 0x14b1, 0x14f1, 0x9004, 0x15f1, 0x15b1};
 
+// Helper to write a single digit
 void writeChar(char ch, int pos) {
     uint16_t a = 0;
     if (ch >= '0' && ch <= '9') a = digits[ch - '0'];
@@ -21,22 +23,23 @@ void writeChar(char ch, int pos) {
     }
 }
 
-int printAt(Display *self, int arg) {
-
-    int pos = arg >> 8;
-    int num = arg & 0xFF;
+// Helper to write a 2-digit number at a starting position
+void printAt(int pos, int num) {
     writeChar(((num / 10) % 10) + '0', pos);
     writeChar((num % 10) + '0', pos + 1);
-    return 0;
 }
 
-int setIndicator(Display *self, int active_gen) {
-    if (active_gen == 0){ 
-        LCDDR13 = 1; // Highlight gen0
-        LCDDR18 = 0; // Unhighlight gen1
-    } else if (active_gen == 1) {
-        LCDDR13 = 0; // Highlight gen1
-        LCDDR18 = 1; // Unhighlight gen0
-    }
-    return 0;
+// The main react method
+void Update_LCD_Event(Display *self, int bridge_ptr) {
+    BridgeController *bridge = (BridgeController *)bridge_ptr;
+
+    // Based on the lab instructions, we divide the 6 segments into 3 parts:
+    // Positions 0-1: North Queue
+    printAt(0, bridge->north_queue);
+    
+    // Positions 2-3: South Queue
+    printAt(4, bridge->south_queue);
+    
+    // Positions 4-5: Cars on Bridge
+    printAt(2, bridge->cars_on_bridge);
 }

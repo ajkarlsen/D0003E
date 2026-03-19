@@ -1,44 +1,69 @@
 #include <avr/io.h>
+#include <avr/interrupt.h>
+#include "TinyTimber.h"
+#include "BridgeController.h"
+#include "Display.h"
+#include "Reciever.h"
 
-// Assume standard 8MHz clock for Butterfly. If your terminal outputs 
-// garbage characters later, your board might be running at 2MHz or 1MHz.
-#define F_CPU 8000000UL 
-#define BAUD 9600
-#define MYUBRR F_CPU/16/BAUD-1
+// --- Constants matching your Mac Simulator ---
+#define SOUTH 0
+#define NORTH 1
+#define RED 2
 
-void USART_Init(unsigned int ubrr) {
-    // Set baud rate
+#define NorthQueueArrival 1
+#define NorthBridgeArrival 2
+#define SouthQueueArrival 4
+#define SouthBridgeArrival 8
+
+#define NorthGreen 9
+#define SouthGreen 6
+#define RedRed 10
+
+// --- 1. The Reactive Object ---
+// This struct holds the entire state of your bridge
+
+
+// Instantiate your bridge
+Display display = initDisplay();
+BridgeController bridge = initBridgeController(&display);
+Reciever reciever = initReciever(&bridge);
+
+// --- 2. Hardware Initialization ---
+void Init(void) {
+    // 1. Clock Config
+    CLKPR = 0x80;
+    CLKPR = 0x00;
+
+    // 2. LCD Config (from your previous code)
+    LCDCRA = (1 << LCDEN);
+    LCDCCR = (1 << LCDCC0) | (1 << LCDCC1) | (1 << LCDCC2) | (1 << LCDCC3);
+    LCDFRR = (0 << LCDPS0) | (0 << LCDPS1) | (0 << LCDPS2); 
+    LCDCRB = (1 << LCDCS) | (1 << LCDMUX0) | (1 << LCDMUX1) | (1 << LCDPM0) | (1 << LCDPM1) | (1 << LCDPM2); 
+
+    // 3. USART Config (9600 Baud)
+    unsigned int ubrr = 8000000UL/16/9600-1;
     UBRR0H = (unsigned char)(ubrr>>8);
     UBRR0L = (unsigned char)ubrr;
     
-    // Enable receiver and transmitter
-    UCSR0B = (1<<RXEN0)|(1<<TXEN0);
-    
-    // Set frame format: 8 data bits, no parity, 1 stop bit (9600 8N1)
-    UCSR0C = (1<<UCSZ01)|(1<<UCSZ00); 
+    // IMPORTANT: We added (1<<RXCIE0) here to enable the Receive Interrupt!
+    UCSR0B = (1<<RXEN0) | (1<<TXEN0) | (1<<RXCIE0);
+    UCSR0C = (1<<UCSZ01) | (1<<UCSZ00); 
 }
 
-void USART_Transmit(unsigned char data) {
-    // Wait for empty transmit buffer
-    while (!(UCSR0A & (1<<UDRE0))) ;
-    // Put data into buffer, sends the data
+// Function to safely send a byte back to the Mac
+void Serial_Write(unsigned char data) {
+    while (!(UCSR0A & (1<<UDRE0))); // Wait for empty transmit buffer
     UDR0 = data;
 }
 
-unsigned char USART_Receive(void) {
-    // Wait for data to be received
-    while (!(UCSR0A & (1<<RXC0))) ;
-    // Get and return received data from buffer
-    return UDR0;
-}
 
 int main(void) {
-    USART_Init(MYUBRR);
+    Init();
     
-    while(1) {
-        // Wait for a character from the Mac, then echo it back
-        unsigned char received_char = USART_Receive();
-        USART_Transmit(received_char);
-    }
-    return 0;
+    // Tell TinyTimber to route the USART Receive Interrupt to our Receive_Sensor_Data method
+    // Note: IRQ_USART0_RX is the standard TinyTimber AVR vector name. 
+    INSTALL(&reciever, Receive_Data, IRQ_USART0_RX);
+    
+    // Boot the TinyTimber kernel and call Start_Bridge
+    return TINYTIMBER(&bridge, Start_Bridge, 0);
 }

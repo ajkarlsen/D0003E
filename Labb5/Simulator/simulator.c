@@ -31,7 +31,6 @@ pthread_mutex_t DataWriteMutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t StateMutex = PTHREAD_MUTEX_INITIALIZER; // Protects queues and bridge count
 
 void initPorts(){
-    // IMPORTANT: Update this string to your exact Mac serial port name!
     PORT = open("/dev/cu.usbserial-FT6SCY68", O_RDWR);
 
     if (PORT < 0) {
