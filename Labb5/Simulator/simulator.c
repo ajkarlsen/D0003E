@@ -28,7 +28,7 @@ int qN= 0, qS=0;
 int carsOnBridge = 0;
 int lightStatus = RED;
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
-struct termios old_terminal_settings; // To restore terminal on exit
+struct termios old_terminal_settings; // resore terminal
 
 
 
@@ -61,15 +61,15 @@ void setupTerminal() {
 void printInfo() {
     char *lightStr;
     if (lightStatus == NORTH) {
-        lightStr = "\033[42m G \033[0m (N) | \033[41m R \033[0m (S)";
+        lightStr = "\033[42m G \033[0m | \033[41m R \033[0m";
     } else if (lightStatus == SOUTH) {
-        lightStr = "\033[41m R \033[0m (N) | \033[42m G \033[0m (S)";
+        lightStr = "\033[41m R \033[0m | \033[42m G \033[0m";
     } else {
-        lightStr = "\033[41m R \033[0m (N) | \033[41m R \033[0m (S)";
+        lightStr = "\033[41m R \033[0m | \033[41m R \033[0m";
     }
 
-    printf("\rLights: %s | North Q: %d | South Q: %d | Cars: %d    ", 
-           lightStr, qN, qS, carsOnBridge);
+    printf("\rNorth Q: %d | %s | South Q: %d | Carross en el bridgo: %d    ", 
+           qN, lightStr, qS, carsOnBridge);
     fflush(stdout); 
 }
 
@@ -102,7 +102,7 @@ void* inputThread(void* arg) {
             write(PORT, &out, 1);
         } else if (input == 'e') {
             printf("\nBaj baj\n");
-            // Important: Restore terminal before exiting!
+            // Resore terminal?
             tcsetattr(STDIN_FILENO, TCSANOW, &old_terminal_settings);
             exit(0);
     }

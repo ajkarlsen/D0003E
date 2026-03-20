@@ -29,17 +29,12 @@ void printAt(int pos, int num) {
     writeChar((num % 10) + '0', pos + 1);
 }
 
-// The main react method
 void Update_LCD_Event(Display *self, int bridge_ptr) {
     BridgeController *bridge = (BridgeController *)bridge_ptr;
 
-    // Based on the lab instructions, we divide the 6 segments into 3 parts:
-    // Positions 0-1: North Queue
     printAt(0, bridge->north_queue);
     
-    // Positions 2-3: South Queue
     printAt(4, bridge->south_queue);
     
-    // Positions 4-5: Cars on Bridge
     printAt(2, bridge->cars_on_bridge);
 }

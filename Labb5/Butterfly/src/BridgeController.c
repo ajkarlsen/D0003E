@@ -31,8 +31,9 @@ void Car_Left_Bridge(BridgeController *self, int arg) {
 void Update_Logic(BridgeController *self, int arg) {
     unsigned char next_light_state = LIGHTS_ALL_RED;
     
-    // 1. First, determine the desired direction
+    // Bridge is empty
     if (self->cars_on_bridge == 0) {
+        // No current directiion, pick one if cars wait
         if (self->current_direction == DIR_EMPTY) {
             if (self->north_queue > 0) {
                 self->current_direction = DIR_NORTH;
@@ -41,6 +42,9 @@ void Update_Logic(BridgeController *self, int arg) {
                 self->current_direction = DIR_SOUTH;
                 self->passing_cars = 0;
             }
+
+        // Direction is north but no cars on bridge
+        // Prioritize switching if other side has cars
         } else if (self->current_direction == DIR_NORTH) {
             if (self->south_queue > 0) {
                 self->current_direction = DIR_SOUTH;
@@ -49,6 +53,9 @@ void Update_Logic(BridgeController *self, int arg) {
                 self->current_direction = DIR_EMPTY;
                 self->passing_cars = 0;
             }
+
+        // Direction is north but no cars on bridge
+        // Prioritize switching if other side has cars
         } else if (self->current_direction == DIR_SOUTH) {
             if (self->north_queue > 0) {
                 self->current_direction = DIR_NORTH;
@@ -60,13 +67,15 @@ void Update_Logic(BridgeController *self, int arg) {
         }
     }
 
-    // 2. Then, set the lights based on the current direction and queue limits
+    // Bridge not empty direction is north
     if (self->current_direction == DIR_NORTH) {
         if (self->passing_cars >= 5 && self->south_queue > 0) {
             next_light_state = LIGHTS_ALL_RED; 
         } else if (self->north_queue > 0) {
             next_light_state = LIGHT_N_GREEN | LIGHT_S_RED;
         }
+        
+    // Bridge not empty direction is south
     } else if (self->current_direction == DIR_SOUTH) {
         if (self->passing_cars >= 5 && self->north_queue > 0) {
             next_light_state = LIGHTS_ALL_RED; 
